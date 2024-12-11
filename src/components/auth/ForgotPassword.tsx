@@ -1,9 +1,20 @@
 import Logo from "../../assets/logo.jpeg";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { authService } from "../../services/authService";
+import { useRecoilState } from "recoil";
+import { createAuthService } from "../../services/authService";
+import { accessTokenState, currentUserState } from "../../store/authState";
 
 const ForgotPassword: React.FC = () => {
+    const [, setToken] = useRecoilState(accessTokenState);
+    const [, setUser] = useRecoilState(currentUserState);
+
+    // Initialize auth service with Recoil setters
+    const authService = createAuthService({
+        setToken,
+        setUser,
+    });
+
     const [email, setEmail] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
 
@@ -17,10 +28,10 @@ const ForgotPassword: React.FC = () => {
 
         setLoading(true);
         try {
-            const response = await authService.forgotPassword({ email }); // Pass as an object
+            const response = await authService.forgotPassword({ email });
             toast.success(response.message || "Password reset email sent successfully!");
         } catch (error: any) {
-            toast.error(error.message || "Failed to send reset email.");
+            toast.error(error.response?.data?.message || "Failed to send reset email.");
         } finally {
             setLoading(false);
         }
@@ -32,29 +43,33 @@ const ForgotPassword: React.FC = () => {
                 <div className="text-center mb-6">
                     <img src={Logo} alt="LadX Logo" className="h-16 mx-auto" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-800 text-center mb-6">
+                <h1 className="text-2xl font-semibold text-center text-gray-800 mb-4">
                     Forgot Password
                 </h1>
+                <p className="text-sm text-gray-600 text-center mb-6">
+                    Enter your email address, and we'll send you a link to reset your password.
+                </p>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Email Address *
+                        <label htmlFor="email" className="block text-gray-700 font-medium mb-2">
+                            Email Address
                         </label>
                         <input
                             type="email"
+                            id="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Enter your email"
-                            required
                         />
                     </div>
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-purple-900 text-white py-2 rounded-lg hover:bg-purple-800 disabled:opacity-50"
+                        className={`w-full py-2 px-4 rounded-lg text-white ${loading ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"
+                            }`}
                     >
-                        {loading ? "Sending..." : "Send Reset Link"}
+                        {loading ? "Sending..." : "Send Reset Email"}
                     </button>
                 </form>
             </div>

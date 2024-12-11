@@ -1,4 +1,5 @@
 import "react-toastify/dist/ReactToastify.css";
+import "./index.css";
 import ForgotPassword from "./components/auth/ForgotPassword";
 import KYC from "./pages/KYC";
 import React from "react";

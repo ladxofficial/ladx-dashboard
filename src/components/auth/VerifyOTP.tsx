@@ -2,13 +2,14 @@ import Logo from "../../assets/logo.jpeg";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { authService } from "../../services/authService";
+import { createAuthService } from "../../services/authService";
 
 const VerifyOTP: React.FC = () => {
     const [otp, setOtp] = useState<string>("");
     const [resending, setResending] = useState(false);
-    const [verifying] = useState(false);
+    const [verifying, setVerifying] = useState(false);
     const navigate = useNavigate();
+    const authService = createAuthService();
 
     const userId = sessionStorage.getItem("userId"); // Retrieve userId from session storage
 
@@ -27,6 +28,7 @@ const VerifyOTP: React.FC = () => {
             return;
         }
 
+        setVerifying(true);
         try {
             const response = await authService.verifyOTP({ userId, otp });
             toast.success(response.message);
@@ -35,6 +37,8 @@ const VerifyOTP: React.FC = () => {
             navigate("/kyc");
         } catch (error: any) {
             toast.error(error.message || "OTP verification failed.");
+        } finally {
+            setVerifying(false);
         }
     };
 
@@ -86,25 +90,23 @@ const VerifyOTP: React.FC = () => {
                                     }
                                 }}
                                 maxLength={1}
-                                className="w-12 h-12 text-center text-lg border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                className="w-12 h-12 text-center text-lg border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         ))}
                     </div>
                     <button
                         type="submit"
+                        className={`w-full py-2 text-white bg-blue-500 rounded-lg font-semibold ${verifying ? "opacity-50 cursor-not-allowed" : ""}`}
                         disabled={verifying}
-                        className="w-full py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50"
                     >
                         {verifying ? "Verifying..." : "Verify OTP"}
                     </button>
                 </form>
-                <div className="mt-6 text-center">
-                    <p className="text-gray-600">Didn't receive the OTP?</p>
+                <div className="text-center mt-6">
                     <button
-                        type="button"
                         onClick={handleResend}
+                        className={`text-blue-500 ${resending ? "opacity-50 cursor-not-allowed" : ""}`}
                         disabled={resending}
-                        className="text-orange-600 hover:underline mt-2 disabled:opacity-50"
                     >
                         {resending ? "Resending..." : "Resend OTP"}
                     </button>

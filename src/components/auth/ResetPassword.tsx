@@ -2,7 +2,9 @@ import Logo from "../../assets/logo.jpeg";
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { authService } from "../../services/authService";
+import { useRecoilState } from "recoil";
+import { createAuthService } from "../../services/authService";
+import { accessTokenState, currentUserState } from "../../store/authState";
 
 const ResetPassword: React.FC = () => {
     const [newPassword, setNewPassword] = useState<string>("");
@@ -10,6 +12,13 @@ const ResetPassword: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+
+    // Get and set the token and user from Recoil state
+    const [, setToken] = useRecoilState(accessTokenState);
+    const [, setUser] = useRecoilState(currentUserState);
+
+    // Create auth service with both setToken and setUser
+    const authService = createAuthService({ setToken, setUser });
 
     const userId = searchParams.get("userId");
     const token = searchParams.get("token");
@@ -37,7 +46,7 @@ const ResetPassword: React.FC = () => {
             toast.success(response.message || "Password reset successful!");
             navigate("/signin");
         } catch (error: any) {
-            toast.error(error.message || "Failed to reset password.");
+            toast.error(error.response?.data?.message || "Failed to reset password.");
         } finally {
             setLoading(false);
         }
@@ -49,42 +58,41 @@ const ResetPassword: React.FC = () => {
                 <div className="text-center mb-6">
                     <img src={Logo} alt="LadX Logo" className="h-16 mx-auto" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-800 text-center mb-6">
-                    Reset Password
-                </h1>
+                <h2 className="text-xl font-bold text-center mb-4">Reset Password</h2>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            New Password *
+                        <label className="block text-gray-700 font-medium mb-2" htmlFor="newPassword">
+                            New Password
                         </label>
                         <input
                             type="password"
+                            id="newPassword"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-700"
+                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-indigo-200"
                             placeholder="Enter your new password"
-                            required
                         />
                     </div>
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Confirm Password *
+                        <label className="block text-gray-700 font-medium mb-2" htmlFor="confirmPassword">
+                            Confirm Password
                         </label>
                         <input
                             type="password"
+                            id="confirmPassword"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-700"
+                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-indigo-200"
                             placeholder="Confirm your new password"
-                            required
                         />
                     </div>
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-purple-900 text-white py-2 rounded-lg hover:bg-purple-800 disabled:opacity-50"
+                        className={`w-full py-2 text-white rounded-lg ${loading ? "bg-indigo-300 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+                            }`}
                     >
-                        {loading ? "Resetting..." : "Reset Password"}
+                        {loading ? "Sending..." : "Reset Password"}
                     </button>
                 </form>
             </div>

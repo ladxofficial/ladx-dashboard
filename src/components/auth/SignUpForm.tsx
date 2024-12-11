@@ -1,11 +1,10 @@
 import InputField from "../common/InputField";
-import Logo from "../../assets/logo.jpeg";
 import React, { useState } from "react";
 import SelectField from "../common/SelectField";
 import StateSelector from "../common/StateSelector";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { authService } from "../../services/authService";
+import { createAuthService } from "../../services/authService";
 import { SignUpFormData } from "../../types/auth";
 
 const SignUpForm: React.FC = () => {
@@ -74,159 +73,130 @@ const SignUpForm: React.FC = () => {
         return Object.keys(errors).length === 0;
     };
 
+    const handleTogglePassword = () => setShowPassword(prev => !prev);  // Function to toggle password visibility
+    const handleToggleConfirmPassword = () => setShowConfirmPassword(prev => !prev); // Function to toggle confirm password visibility
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        setFormErrors((prev) => ({ ...prev, [name]: "" })); // Clear specific error
+        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormErrors(prev => ({ ...prev, [name]: "" })); // Clear specific error
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (!validateForm()) return;
+        if (!validateForm()) {
+            return;
+        }
 
         setLoading(true);
+        const authService = createAuthService();
+
         try {
             const response = await authService.signUp(formData);
-            toast.success(response.message);
-            navigate("/verify-otp");
+
+            // Ensure you're using the response if necessary
+            if (response.success) {
+                toast.success("Sign up successful!");
+                navigate("/login");
+            } else {
+                throw new Error(response.message); // Handle the case when signup is not successful
+            }
         } catch (error: any) {
-            toast.error(error.message || "Sign-up failed.");
+            toast.error(error.message || "Sign up failed.");
         } finally {
             setLoading(false);
         }
     };
 
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="bg-white shadow-lg rounded-lg w-full max-w-lg">
-                <div className="text-center py-6 px-6">
-                    <img src={Logo} alt="Platform Logo" className="h-16 mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold text-gray-800">Create Your Account</h1>
-                    <p className="text-gray-600 mt-2">Sign up to get started</p>
-                </div>
-                <form onSubmit={handleSubmit} className="px-8 pb-6">
-                    {Object.keys(formErrors).length > 0 && (
-                        <div className="bg-red-100 text-red-700 p-4 mb-6 rounded">
-                            {Object.values(formErrors).map((error, index) => (
-                                <div key={index}>{error}</div>
-                            ))}
-                        </div>
-                    )}
-                    <InputField
-                        label="Full Name"
-                        name="fullName"
-                        type="text"
-                        value={formData.fullName}
-                        error={formErrors.fullName}
-                        onChange={handleChange}
-                    />
-                    <InputField
-                        label="Email"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        error={formErrors.email}
-                        onChange={handleChange}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                        <SelectField
-                            label="Country"
-                            name="country"
-                            value={formData.country}
-                            options={[
-                                { value: "Rwanda", label: "Rwanda" },
-                                { value: "Nigeria", label: "Nigeria" },
-                            ]}
-                            error={formErrors.country}
-                            onChange={handleChange}
-                        />
-                        <StateSelector
-                            country={formData.country}
-                            value={formData.state}
-                            error={formErrors.state}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <InputField
-                        label="Phone Number"
-                        name="phoneNumber"
-                        type="tel"
-                        value={formData.phoneNumber}
-                        error={formErrors.phoneNumber}
-                        onChange={handleChange}
-                    />
-                    <SelectField
-                        label="Gender"
-                        name="gender"
-                        value={formData.gender}
-                        options={[
-                            { value: "Male", label: "Male" },
-                            { value: "Female", label: "Female" },
-                            { value: "Other", label: "Other" },
-                        ]}
-                        error={formErrors.gender}
-                        onChange={handleChange}
-                    />
-                    <div className="mb-4 relative">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Password *
-                        </label>
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            placeholder="Enter your password"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-9 text-gray-500"
-                        >
-                            {showPassword ? "🙈" : "👁️"}
-                        </button>
-                    </div>
-                    <div className="mb-4 relative">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Confirm Password *
-                        </label>
-                        <input
-                            type={showConfirmPassword ? "text" : "password"}
-                            name="confirmPassword"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            placeholder="Confirm your password"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3 top-9 text-gray-500"
-                        >
-                            {showConfirmPassword ? "🙈" : "👁️"}
-                        </button>
-                    </div>
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-3 bg-purple-900 text-white rounded-lg hover:bg-purple-800 disabled:opacity-50 mt-6 transition duration-300"
-                    >
-                        {loading ? "Creating Account..." : "Sign Up"}
-                    </button>
-                </form>
-                <div className="text-center text-sm text-gray-600 py-4">
-                    Already have an account?{" "}
-                    <button
-                        onClick={() => navigate("/signin")}
-                        className="text-purple-900 hover:underline"
-                    >
-                        Sign In
-                    </button>
-                </div>
-            </div>
-        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <InputField
+                label="Full Name"
+                name="fullName"
+                type="text"
+                value={formData.fullName}
+                onChange={handleChange}
+                error={formErrors.fullName}
+            />
+
+            {/* Email Input */}
+            <InputField
+                label="Email"
+                name="email"
+                type="text"
+                value={formData.email}
+                onChange={handleChange}
+                error={formErrors.email}
+            />
+            <InputField
+                label="Phone Number"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                error={formErrors.phoneNumber}
+            />
+            <SelectField
+                label="Country"
+                name="country"
+                value={formData.country}
+                options={[
+                    { value: "Rwanda", label: "Rwanda" },
+                    { value: "Nigeria", label: "Nigeria" },
+                    // Add more countries as needed
+                ]}
+                onChange={handleChange}
+                error={formErrors.country}
+            />
+            <StateSelector
+                country={formData.country}
+                value={formData.state}
+                onChange={handleChange}
+                error={formErrors.state}
+            />
+            <SelectField
+                label="Gender"
+                name="gender"
+                value={formData.gender}
+                options={[
+                    { value: "Male", label: "Male" },
+                    { value: "Female", label: "Female" },
+                    { value: "Other", label: "Other" },
+                ]}
+                onChange={handleChange}
+                error={formErrors.gender}
+            />
+            {/* Password Input */}
+            <InputField
+                label="Password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                error={formErrors.password}
+                showPassword={showPassword}
+                toggleShowPassword={handleTogglePassword}
+            />
+
+            {/* Confirm Password Input */}
+            <InputField
+                label="Confirm Password"
+                name="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                error={formErrors.confirmPassword}
+                showPassword={showConfirmPassword}
+                toggleShowPassword={handleToggleConfirmPassword}
+            />
+            <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-2 bg-blue-500 text-white rounded-lg"
+            >
+                {loading ? "Signing Up..." : "Sign Up"}
+            </button>
+        </form>
     );
 };
 
