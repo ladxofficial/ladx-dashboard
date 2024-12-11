@@ -97,7 +97,7 @@ const SignUpForm: React.FC = () => {
             // Ensure you're using the response if necessary
             if (response.success) {
                 toast.success("Sign up successful!");
-                navigate("/login");
+                navigate("/verify-otp");
             } else {
                 throw new Error(response.message); // Handle the case when signup is not successful
             }

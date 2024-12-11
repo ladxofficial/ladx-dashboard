@@ -110,11 +110,13 @@ export const createAuthService = (setters?: RecoilSetters) => ({
         }
     },
 
-    updateRole: async (data: { role: string }): Promise<AuthResponse> => {
+    updateRole:  async (data: { role: string }): Promise<AuthResponse> => {
         try {
-            const response = await axiosInstance.post<AuthResponse>("/auth/update-role", data);
+            // Use PATCH instead of POST
+            const response = await axiosInstance.patch<AuthResponse>("/users/role", data); 
             return response.data; // Return the response
         } catch (error: any) {
+            // Handle errors and provide meaningful messages
             throw new Error(error.response?.data?.message || "Role update failed.");
         }
     },
